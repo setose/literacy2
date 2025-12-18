@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ネットワーク用語 総復習（全範囲）</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .option-card {
+            transition: all 0.2s ease;
+        }
+        .option-card:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .correct-anim {
+            animation: pulse-green 0.5s;
+        }
+        .wrong-anim {
+            animation: shake-red 0.5s;
+        }
+        @keyframes pulse-green {
+            0%, 100% { background-color: #dcfce7; border-color: #22c55e; }
+            50% { background-color: #bbf7d0; transform: scale(1.01); }
+        }
+        @keyframes shake-red {
+            0%, 100% { transform: translateX(0); background-color: #fee2e2; border-color: #ef4444; }
+            20% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-slate-800 text-white shadow-lg sticky top-0 z-10">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-lg md:text-xl font-bold flex items-center gap-2">
+                <i class="fas fa-server"></i>
+                ネットワーク用語 完全攻略
+            </h1>
+            <div class="text-xs md:text-sm bg-slate-700 px-3 py-1 rounded-full">
+                第8回〜第12回 全項目
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-4 flex items-center justify-center">
+        
+        <!-- Start Screen -->
+        <div id="start-screen" class="max-w-2xl w-full bg-white rounded-xl shadow-xl p-8 text-center animate-fade-in">
+            <div class="mb-6 inline-block p-4 rounded-full bg-blue-100 text-blue-600">
+                <i class="fas fa-tasks text-4xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-4">全項目確認テスト</h2>
+            <p class="text-gray-600 mb-8 text-left bg-gray-50 p-4 rounded-lg text-sm leading-relaxed">
+                講義ノートに含まれる以下の全項目から出題されます（全46問）。<br><br>
+                <strong>第8回:</strong> 携帯通信の仕組み、多元接続(FDMA/TDMA/CDMA/OFDM/OFDMA)、変調方式(ASK/FSK/PSK/QPSK/QAM)、高速化技術(MIMO/CA)、5G要件、無線LAN<br>
+                <strong>第9回:</strong> 品質の定義(接続/伝送/安定)、QoS(PQ/CQ)、キャスト、CDN、ABR<br>
+                <strong>第10回:</strong> インターネット構成、AS、フルルート、階層構造(トランジット/ピアリング)<br>
+                <strong>第11回:</strong> メール(SMTP/POP/IMAP/MIME)、迷惑メール対策(OP25B/SPF/DKIM/DMARC)、IP電話(SIP/RTP)<br>
+                <strong>第12回:</strong> VPN種類、IPsec、広域イーサネット
+            </p>
+            <button onclick="quizApp.startQuiz()" class="w-full md:w-auto px-10 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-md transition transform hover:scale-105">
+                スタート (全46問)
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden max-w-3xl w-full pb-20">
+            <!-- Progress -->
+            <div class="bg-white rounded-lg shadow-sm p-4 mb-4 sticky top-16 z-10 border-b border-gray-100">
+                <div class="flex justify-between items-end mb-2">
+                    <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Progress</span>
+                    <span class="text-sm font-bold text-blue-600"><span id="current-q-num">1</span> / <span id="total-q-num">46</span></span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="bg-white rounded-xl shadow-xl overflow-hidden animate-fade-in min-h-[400px]">
+                <div class="p-6 md:p-8 border-b border-gray-100">
+                    <span id="category-badge" class="inline-block px-3 py-1 mb-3 text-xs font-bold text-white bg-indigo-500 rounded-full">
+                        Category
+                    </span>
+                    <h3 id="question-text" class="text-lg md:text-xl font-bold text-gray-800 leading-relaxed">
+                        ここに問題文が表示されます
+                    </h3>
+                </div>
+
+                <!-- Options -->
+                <div id="options-container" class="p-6 md:p-8 grid gap-3">
+                    <!-- Options injected by JS -->
+                </div>
+
+                <!-- Feedback Area -->
+                <div id="feedback-area" class="hidden bg-slate-50 p-6 md:p-8 border-t border-gray-200">
+                    <div id="feedback-header" class="flex items-center gap-2 mb-3 text-lg font-bold"></div>
+                    <p id="feedback-explanation" class="text-sm md:text-base text-gray-700 leading-relaxed mb-6"></p>
+                    <button id="next-btn" onclick="quizApp.nextQuestion()" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-lg shadow transition flex justify-center items-center gap-2">
+                        次へ <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden max-w-2xl w-full animate-fade-in text-center">
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <div class="text-6xl mb-4">🎉</div>
+                <h2 class="text-2xl font-bold mb-2">終了！</h2>
+                <div class="text-4xl font-bold text-blue-600 mb-6">
+                    <span id="final-score">0</span> / <span id="total-score-denom">46</span>
+                </div>
+                <p class="text-gray-600 mb-8">お疲れ様でした。すべての項目を確認しました。</p>
+                <button onclick="location.reload()" class="px-8 py-3 bg-blue-600 text-white font-bold rounded-lg shadow hover:bg-blue-700">
+                    最初からやり直す
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const quizData = [
+            // --- 第8回 携帯・基本 ---
+            {
+                category: "第8回 携帯通信の仕組み",
+                question: "携帯電話の着信の仕組みとして正しい流れはどれか？",
+                options: [
+                    "ダイヤル → ホームメモリに問い合わせ → エリア内に呼び出し信号 → 応答",
+                    "ダイヤル → 全基地局が一斉に呼び出し → 端末が応答",
+                    "ダイヤル → 端末のGPSを探知 → 直接接続",
+                    "ダイヤル → 近くの基地局が独自に判断 → 呼び出し"
+                ],
+                correct: 0,
+                explanation: "携帯は「ホームメモリに登録」されており、ダイヤルされるとまずホームメモリに問い合わせが行われ、対象のエリア内に一斉呼び出し信号を出して対象が応答します。"
+            },
+            {
+                category: "第8回 携帯通信の仕組み",
+                question: "携帯電話網において、日本全国をいくつかの区域に分けて管理している単位を何と呼ぶか？",
+                options: ["位置登録エリア", "ローミングエリア", "セルラーブロック", "IPアドレス帯域"],
+                correct: 0,
+                explanation: "携帯電話ネットワークでは、日本全国を「位置登録エリア」に分けて管理しています。"
+            },
+            {
+                category: "第8回 携帯通信の仕組み",
+                question: "通話や通信を行いながら基地局間を移動した際、接続を切り替える技術を何というか？",
+                options: ["ハンドオーバー", "ハンドシェイク", "ローミング", "テザリング"],
+                correct: 0,
+                explanation: "基地局を移動すると「ハンドオーバー」が発生し、通信を継続します。"
+            },
+            // --- 第8回 多元接続 ---
+            {
+                category: "第8回 多元接続",
+                question: "【FDMA】の説明として正しいものは？",
+                options: ["ユーザーごとに異なる無線周波数を設定する", "一つの周波数の時間を分割する", "同一周波数で異なるコードを使う", "1チャネルを分割して同時通信する"],
+                correct: 0,
+                explanation: "FDMA (Frequency Division Multiple Access) は、ユーザーごとに異なる無線周波数を設定する方式です。"
+            },
+            {
+                category: "第8回 多元接続",
+                question: "【TDMA】の説明として正しいものは？",
+                options: ["一つの無線周波数の時間をいくつかのタイムスロットに分割する", "ユーザーごとに異なる周波数を割り当てる", "スペクトラムの隙間に重ねる", "符号によってユーザーを区別する"],
+                correct: 0,
+                explanation: "TDMA (Time Division Multiple Access) は、一つの無線周波数の時間をいくつかのタイムスロットに分割して利用します。"
+            },
+            {
+                category: "第8回 多元接続",
+                question: "【CDMA】の説明として正しいものは？",
+                options: ["同一の周波数でユーザーごとに異なるコードを利用する", "時間を細かく分割する", "周波数帯をユーザーごとに分ける", "サブキャリアを直交させる"],
+                correct: 0,
+                explanation: "CDMA (Code Division Multiple Access) は、同一の周波数でユーザーごとに異なるコード（符号）を利用します。"
+            },
+            {
+                category: "第8回 多元接続",
+                question: "【OFDM】の特徴として正しい記述は？",
+                options: ["スペクトラムが0になる隙間に隣の電送波を重ねる", "時間を分割して利用する", "特定のコードで拡散する", "アナログ信号をそのまま送る"],
+                correct: 0,
+                explanation: "OFDM (Orthogonal Frequency Division Multiplexing) は、スペクトラムが0になる隙間に隣の電送波を重ねることで高密度な通信を行います。"
+            },
+            {
+                category: "第8回 多元接続",
+                question: "【OFDMA】の説明として正しいものは？",
+                options: ["1チャネルを分割して複数の端末が同時に通信可能にする", "ユーザーごとに異なるコードを使う", "時間を分割して順番に通信する", "異なる周波数を完全に分離する"],
+                correct: 0,
+                explanation: "OFDMAはOFDMを発展させたもので、1チャネルをさらに分割して複数の端末が同時に通信可能にします。"
+            },
+            // --- 第8回 バンド・変調 ---
+            {
+                category: "第8回 周波数",
+                question: "つながりやすい周波数帯とされる「700-900MHz」帯の通称は？",
+                options: ["プラチナバンド", "ゴールドバンド", "ダイヤモンドバンド", "プレミアバンド"],
+                correct: 0,
+                explanation: "700-900MHz帯は障害物に強く広範囲に届くため「プラチナバンド」と呼ばれます。"
+            },
+            {
+                category: "第8回 変調方式",
+                question: "【ASK (Amplitude Shift Keying)】の説明は？",
+                options: ["直線と波で0と1を表現する（振幅を変える）", "周波数を変更する", "位相を変更する", "第4象限を使う"],
+                correct: 0,
+                explanation: "ASKは振幅（Amplitude）を変えることで、直線（振幅小/なし）と波（振幅大/あり）で01を表現します。"
+            },
+            {
+                category: "第8回 変調方式",
+                question: "【FSK (Frequency Shift Keying)】の説明は？",
+                options: ["周波数を変更することで0と1を表現する", "振幅の大きさで表現する", "位相の角度で表現する", "円運動で表現する"],
+                correct: 0,
+                explanation: "FSKは周波数（Frequency）を変更する（波の密度を変える）ことで01を表現します。"
+            },
+            {
+                category: "第8回 変調方式",
+                question: "【PSK (Phase Shift Keying)】の説明は？",
+                options: ["サインコサイン（位相）で0と1を表現する", "振幅の大小で表現する", "周波数の高低で表現する", "複数のアンテナを使う"],
+                correct: 0,
+                explanation: "PSKは位相（Phase）、つまり波のタイミング（サイン・コサインの関係）で01を表現します。"
+            },
+            {
+                category: "第8回 変調方式",
+                question: "【QPSK】の特徴は？",
+                options: ["第4象限と円運動を使って2ビットをまとめて表現する", "1ビットずつ送信する", "振幅のみを変化させる", "周波数のみを変化させる"],
+                correct: 0,
+                explanation: "QPSKは位相を4つ（第4象限）使い、一度に2ビット（00, 01, 10, 11）をまとめて表現します。"
+            },
+            {
+                category: "第8回 変調方式",
+                question: "【QAM】の特徴は？",
+                options: ["第4象限とx,y（振幅と位相）でQPSKより多くのパターンを表現する", "周波数のみを変える", "時間のみを分割する", "1ビットのみ伝送する"],
+                correct: 0,
+                explanation: "QAMは位相と振幅（x,y座標）を組み合わせ、16QAMや64QAMなどQPSKより多くのパターンを表現します。"
+            },
+            // --- 第8回 高速化・5G・WLAN ---
+            {
+                category: "第8回 高速化技術",
+                question: "複数のアンテナで通信路を複数用意する技術（MIMO, SUMIMO, MUMIMO）のイメージとして正しいのは？",
+                options: ["複数のアンテナでデータを並列伝送して高速化する", "一つの強力なアンテナにする", "アンテナを高く設置する", "周波数を高くする"],
+                correct: 0,
+                explanation: "MIMO等は、複数のアンテナを用いて通信路（ストリーム）を複数用意するイメージの技術です。"
+            },
+            {
+                category: "第8回 高速化技術",
+                question: "複数の帯域幅を重ねて通信速度を向上させる技術（例：5MHz×5＝100MHz相当幅など）を何というか？",
+                options: ["キャリアアグリゲーション", "ハンドオーバー", "チャネルボンディング", "テザリング"],
+                correct: 0,
+                explanation: "複数の周波数帯域（キャリア）を束ねる（アグリゲーション）技術は「キャリアアグリゲーション」です。"
+            },
+            {
+                category: "第8回 5G",
+                question: "5G（第5世代）に期待されているスペックとして正しい組み合わせは？",
+                options: ["20Gbps、1ミリ秒の遅延、100万台/km²の接続", "1Gbps、10ミリ秒の遅延、1万台/km²の接続", "100Mbps、遅延なし、無制限接続", "50Gbps、0.1ミリ秒の遅延、10万台/km²の接続"],
+                correct: 0,
+                explanation: "5Gの目標性能は「高速大容量(20Gbps)」「超低遅延(1ミリ秒)」「多数同時接続(100万台/km²)」です。"
+            },
+            {
+                category: "第8回 無線LAN",
+                question: "無線LANにおいて、複数のチャネルを同時に利用して高速化する技術を何というか？（利用可能チャネル数は少なくなる）",
+                options: ["チャネルボンディング", "キャリアアグリゲーション", "MIMO", "OFDMA"],
+                correct: 0,
+                explanation: "隣り合うチャネルを結合して帯域を広げる技術は、無線LANでは「チャネルボンディング」と呼ばれます。"
+            },
+            // --- 第9回 品質・QoS ---
+            {
+                category: "第9回 通信品質",
+                question: "品質に関する規定・保証がないサービス形態を何というか？",
+                options: ["ベストエフォート型", "ギャランティ型", "帯域保証型", "QoS型"],
+                correct: 0,
+                explanation: "最大限の努力はするが品質保証はない形式を「ベストエフォート型サービス」といいます。"
+            },
+            {
+                category: "第9回 品質の定義",
+                question: "「使いたいときにきちんとつながり、すぐつながること」を指す品質は？",
+                options: ["接続品質", "伝送品質", "安定品質", "総合品質"],
+                correct: 0,
+                explanation: "つながるまでの品質は「接続品質」です。"
+            },
+            {
+                category: "第9回 品質の定義",
+                question: "「パケットロスが少ない、すぐ到着する、遅延が一定など」を指す品質は？",
+                options: ["伝送品質", "接続品質", "安定品質", "応答品質"],
+                correct: 0,
+                explanation: "データが送られる際の中身や速度に関する品質は「伝送品質」です。"
+            },
+            {
+                category: "第9回 品質の定義",
+                question: "「いつでも使えること、装置の信頼性が高い、災害時でも安定していること」を指す品質は？",
+                options: ["安定品質", "接続品質", "伝送品質", "堅牢品質"],
+                correct: 0,
+                explanation: "システム全体の信頼性や可用性に関する品質は「安定品質」です。"
+            },
+            {
+                category: "第9回 QoS",
+                question: "QoS制御における「PQ」の説明は？",
+                options: ["優先度の高いキューを先に処理する", "各キューの重みに基づいて処理する", "到着順に処理する", "ランダムに処理する"],
+                correct: 0,
+                explanation: "PQ (Priority Queueing) は、優先度の高いキューにあるパケットを絶対的に優先して処理します。"
+            },
+            {
+                category: "第9回 QoS",
+                question: "QoS制御における「CQ」の説明は？",
+                options: ["各キューの重みに基づき処理する", "優先度の高いものだけ処理する", "到着順に処理する", "パケットを破棄する"],
+                correct: 0,
+                explanation: "CQ (Custom Queueing / Weighted Fair Queueing等の総称的記述) は、設定された重みに基づいて帯域を配分します。"
+            },
+            // --- 第9回 キャスト・CDN・ABR ---
+            {
+                category: "第9回 配信技術",
+                question: "通信方式のうち「1対1」の通信はどれか？",
+                options: ["ユニキャスト", "マルチキャスト", "ブロードキャスト", "エニーキャスト"],
+                correct: 0,
+                explanation: "1対1は「ユニキャスト」です。"
+            },
+            {
+                category: "第9回 配信技術",
+                question: "通信方式のうち「1対N（特定多数）」の通信はどれか？",
+                options: ["マルチキャスト", "ユニキャスト", "ブロードキャスト", "Ｐ２Ｐ"],
+                correct: 0,
+                explanation: "1対Nは「マルチキャスト」です。"
+            },
+            {
+                category: "第9回 CDN",
+                question: "CDN（Content Delivery Network）の仕組みとして正しい記述は？",
+                options: ["オリジンのデータサーバーではなく近くのサーバーに一時的におくことで負荷を下げる", "すべてのデータをオリジンサーバーから直接配信する", "データを圧縮して小さくする技術", "動画専用のファイル形式"],
+                correct: 0,
+                explanation: "CDNはユーザーに近いサーバー（エッジサーバー）にコンテンツをキャッシュし、オリジンサーバーの負荷分散と高速化を行います。"
+            },
+            {
+                category: "第9回 動画配信",
+                question: "ABR (Adaptive Bitrate Streaming) の説明として正しいものは？",
+                options: ["動画を小さなセグメントに分割し、デバイスやネットワークに応じてビットレートを自動で切り替える", "画質を最高品質に固定して配信する", "すべてのユーザーに同じ解像度で配信する", "ダウンロードが完了してから再生する"],
+                correct: 0,
+                explanation: "ABRは状況に応じて画質を自動調整し、QoE（体感品質）の低下を防ぐ技術です。"
+            },
+            // --- 第10回 インターネット ---
+            {
+                category: "第10回 インターネット構成",
+                question: "「AS (Autonomous System)」の定義は？",
+                options: ["同一のルーティング方針で管理されているネットワークの集合", "世界中の全IPアドレスのリスト", "インターネット上のドメイン名管理組織", "プロバイダ間の契約書"],
+                correct: 0,
+                explanation: "ASは、単一の運用ポリシーの下で管理されるネットワークの集合体です。"
+            },
+            {
+                category: "第10回 インターネット構成",
+                question: "全世界のASと通信するための経路情報を何と呼ぶか？",
+                options: ["インターネットフルルート", "デフォルトゲートウェイ", "DNSレコード", "ルーティングテーブル"],
+                correct: 0,
+                explanation: "全世界のASへの到達経路を網羅した情報は「インターネットフルルート」と呼ばれます。"
+            },
+            {
+                category: "第10回 インターネット構成",
+                question: "ASの階層構造において、下位のティアが上位のティアにフルルートを購入して接続することを何というか？",
+                options: ["トランジット", "ピアリング", "ローミング", "ハンドオーバー"],
+                correct: 0,
+                explanation: "対価を払って上位ISPから経路情報（フルルート）をもらい接続することを「トランジット」といいます。"
+            },
+            {
+                category: "第10回 インターネット構成",
+                question: "同じティア同士が、無料で経路情報の交換を行うことを何というか？",
+                options: ["ピアリング", "トランジット", "スイッチング", "ボンディング"],
+                correct: 0,
+                explanation: "対等な関係で経路交換を行うことは「ピアリング」です。"
+            },
+            // --- 第11回 メール・電話 ---
+            {
+                category: "第11回 電子メール",
+                question: "メール送信・転送に使われるプロトコル「SMTP」の正式名称は？",
+                options: ["Simple Mail Transfer Protocol", "Secure Mail Transport Program", "Standard Mail Transfer Protocol", "System Mail Transmission Protocol"],
+                correct: 0,
+                explanation: "SMTPは Simple Mail Transfer Protocol です。"
+            },
+            {
+                category: "第11回 電子メール",
+                question: "メールの「受信」に使われるプロトコルはどれか？",
+                options: ["POP3、IMAP", "SMTP", "DNS", "HTTP"],
+                correct: 0,
+                explanation: "受信にはPOP3やIMAPが使われます。"
+            },
+            {
+                category: "第11回 電子メール",
+                question: "画像や音声、動画等をメールで使えるようにする規格は？",
+                options: ["MIME", "HTML", "XML", "SMTP"],
+                correct: 0,
+                explanation: "MIME (Multipurpose Internet Mail Extensions) により、テキスト以外のデータをメールで扱えます。"
+            },
+            {
+                category: "第11回 迷惑メール対策",
+                question: "「OP25B」の説明として正しいものは？",
+                options: ["自社メールサーバを経由せずに外部から送信される25番ポートをブロックする", "受信したメールのIPアドレスを確認する", "メールに電子署名を付与する", "迷惑メールの扱いを決定する"],
+                correct: 0,
+                explanation: "OP25B (Outbound Port 25 Blocking) は、プロバイダのメールサーバを経由しない直接送信（スパム送信）を防ぐため25番ポートを遮断します。"
+            },
+            {
+                category: "第11回 迷惑メール対策",
+                question: "「SPF」の説明として正しいものは？",
+                options: ["受信者が、送信元のIPアドレスとDNSサーバーに登録されているIPアドレスが一致しているか確認する", "電子署名を用いて改ざんを検知する", "25番ポートをブロックする", "メール本文を暗号化する"],
+                correct: 0,
+                explanation: "SPF (Sender Policy Framework) は、IPアドレスベースで送信元ドメインのなりすましを防ぐ技術です。"
+            },
+            {
+                category: "第11回 迷惑メール対策",
+                question: "「DKIM」の説明として正しいものは？",
+                options: ["メールに付与した電子署名（公開鍵暗号方式）で送信元ドメインが詐称されていないか検証する", "IPアドレスの一致を確認する", "25番ポートをブロックする", "ポリシーを宣言する"],
+                correct: 0,
+                explanation: "DKIM (DomainKeys Identified Mail) は、電子署名を用いて送信元の正当性と非改ざん性を検証します。"
+            },
+            {
+                category: "第11回 迷惑メール対策",
+                question: "「DMARC」の説明として正しいものは？",
+                options: ["SPFやDKIMで迷惑メールと判断されたメールをどう扱うのか決定・宣言する", "メールを暗号化する", "IPアドレスを確認する", "電子署名を付与する"],
+                correct: 0,
+                explanation: "DMARCは、認証に失敗したメールの扱い（受信拒否、隔離など）を送信側が受信側に指示する仕組みです。"
+            },
+            {
+                category: "第11回 電子メール",
+                question: "電子メール自体を暗号化する規格は？",
+                options: ["S/MIME", "SSL/TLS", "HTTPS", "VPN"],
+                correct: 0,
+                explanation: "S/MIME (Secure/MIME) は、メールの内容を暗号化し、電子署名を付ける規格です。"
+            },
+            {
+                category: "第11回 IP電話",
+                question: "IP電話で利用される「RTP」の役割は？",
+                options: ["UDPにない情報を補完する（パケットの順番、再生タイミング等）", "セッションの開始・終了を制御する", "音声を圧縮する", "電話番号を管理する"],
+                correct: 0,
+                explanation: "RTP (Real-time Transport Protocol) は、リアルタイムデータの順序やタイミング情報をUDPに追加して伝送します。"
+            },
+            {
+                category: "第11回 IP電話",
+                question: "IP電話で利用される「SIP」の役割は？",
+                options: ["セッションの開始、確立、変更、切断などを制御する", "音声データを運ぶ", "パケットの順番を管理する", "通話料を計算する"],
+                correct: 0,
+                explanation: "SIP (Session Initiation Protocol) は、呼制御（電話をかける・切る等の制御）を行うプロトコルです。"
+            },
+            // --- 第12回 VPN ---
+            {
+                category: "第12回 VPN",
+                question: "「インターネットVPN」の説明は？",
+                options: ["インターネット上でトンネリング技術を利用して構築するVPN", "通信事業者の閉域網を利用するVPN", "専用線を物理的に敷設する", "LANケーブルで直接つなぐ"],
+                correct: 0,
+                explanation: "インターネットVPNは、公衆網であるインターネット上に仮想的なトンネルを作って通信します。"
+            },
+            {
+                category: "第12回 VPN",
+                question: "「IP-VPN」の説明は？",
+                options: ["通信事業者の閉域網を利用するVPN", "インターネットを利用するVPN", "暗号化のみを行う技術", "PC同士を直接つなぐ"],
+                correct: 0,
+                explanation: "IP-VPNは、一般のインターネットではなく通信事業者が管理する閉域網（MPLS網など）を利用します。"
+            },
+            {
+                category: "第12回 VPN",
+                question: "IP通信そのものをセキュア化（暗号化）するための仕組み・プロトコル群は？",
+                options: ["IPsec", "SSL", "SSH", "WEP"],
+                correct: 0,
+                explanation: "IPsec (Security Architecture for IP) は、IPパケット単位で暗号化や認証を行う仕組みです。"
+            },
+            {
+                category: "第12回 VPN",
+                question: "離れた拠点間をイーサネット（L2）でつなぐサービスを何というか？",
+                options: ["広域イーサネット", "IP-VPN", "インターネットVPN", "専用線"],
+                correct: 0,
+                explanation: "広域イーサネットは、地理的に離れたLAN同士を、あたかも一つの大きなイーサネットのように接続するサービスです。"
+            }
+        ];
+
+        const quizApp = {
+            currentQuestionIndex: 0,
+            score: 0,
+            isAnswering: false,
+            totalQuestions: quizData.length,
+
+            init() {
+                // 全項目チェックのため、今回はシャッフルせずに講義順に出題します
+                // this.shuffleArray(quizData); 
+                document.getElementById('total-q-num').textContent = this.totalQuestions;
+                document.getElementById('total-score-denom').textContent = this.totalQuestions;
+            },
+
+            startQuiz() {
+                this.init();
+                this.currentQuestionIndex = 0;
+                this.score = 0;
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('quiz-screen').classList.remove('hidden');
+                document.getElementById('result-screen').classList.add('hidden');
+                this.renderQuestion();
+            },
+
+            renderQuestion() {
+                const questionData = quizData[this.currentQuestionIndex];
+                
+                // Update UI
+                document.getElementById('current-q-num').textContent = this.currentQuestionIndex + 1;
+                document.getElementById('progress-bar').style.width = `${((this.currentQuestionIndex) / this.totalQuestions) * 100}%`;
+                document.getElementById('category-badge').textContent = questionData.category;
+                document.getElementById('question-text').textContent = questionData.question;
+                
+                // Reset feedback
+                document.getElementById('feedback-area').classList.add('hidden');
+                
+                // Options
+                const optionsContainer = document.getElementById('options-container');
+                optionsContainer.innerHTML = '';
+                
+                this.isAnswering = true;
+
+                questionData.options.forEach((option, index) => {
+                    const button = document.createElement('button');
+                    button.className = 'option-card w-full text-left p-4 rounded-xl border-2 border-gray-100 hover:border-blue-400 hover:bg-blue-50 bg-white font-medium text-gray-700 transition flex items-center gap-3';
+                    button.innerHTML = `<div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-500 border border-gray-200 flex-shrink-0">${String.fromCharCode(65 + index)}</div> <span class="text-sm md:text-base">${option}</span>`;
+                    button.onclick = () => this.checkAnswer(index, button);
+                    optionsContainer.appendChild(button);
+                });
+            },
+
+            checkAnswer(selectedIndex, selectedButton) {
+                if (!this.isAnswering) return;
+                this.isAnswering = false;
+
+                const questionData = quizData[this.currentQuestionIndex];
+                const isCorrect = selectedIndex === questionData.correct;
+                const optionsContainer = document.getElementById('options-container');
+                const buttons = optionsContainer.querySelectorAll('button');
+
+                if (isCorrect) this.score++;
+
+                buttons.forEach((btn, idx) => {
+                    btn.disabled = true;
+                    if (idx === questionData.correct) {
+                        btn.classList.remove('border-gray-100', 'bg-white');
+                        btn.classList.add('bg-green-100', 'border-green-500', 'text-green-900', 'correct-anim');
+                        btn.querySelector('div').classList.add('bg-green-200', 'text-green-800', 'border-green-400');
+                        btn.querySelector('div').innerHTML = '✓';
+                    } else if (idx === selectedIndex && !isCorrect) {
+                        btn.classList.remove('border-gray-100', 'bg-white');
+                        btn.classList.add('bg-red-100', 'border-red-500', 'text-red-900', 'wrong-anim');
+                        btn.querySelector('div').classList.add('bg-red-200', 'text-red-800', 'border-red-400');
+                        btn.querySelector('div').innerHTML = '✕';
+                    } else {
+                        btn.classList.add('opacity-40');
+                    }
+                });
+
+                // Show feedback
+                const feedbackArea = document.getElementById('feedback-area');
+                const feedbackHeader = document.getElementById('feedback-header');
+                const feedbackExplanation = document.getElementById('feedback-explanation');
+
+                feedbackArea.classList.remove('hidden');
+                // feedbackArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                if (isCorrect) {
+                    feedbackHeader.innerHTML = '<i class="fas fa-check-circle text-green-500"></i> <span class="text-green-700">正解！</span>';
+                } else {
+                    feedbackHeader.innerHTML = '<i class="fas fa-times-circle text-red-500"></i> <span class="text-red-700">不正解...</span>';
+                }
+                feedbackExplanation.innerHTML = `<span class="font-bold text-gray-900 block mb-2">答え: ${questionData.options[questionData.correct]}</span>${questionData.explanation}`;
+                
+                const nextBtn = document.getElementById('next-btn');
+                if (this.currentQuestionIndex === this.totalQuestions - 1) {
+                    nextBtn.innerHTML = '結果を見る <i class="fas fa-flag-checkered"></i>';
+                } else {
+                    nextBtn.innerHTML = '次へ <i class="fas fa-chevron-right"></i>';
+                }
+            },
+
+            nextQuestion() {
+                if (this.currentQuestionIndex < this.totalQuestions - 1) {
+                    this.currentQuestionIndex++;
+                    this.renderQuestion();
+                    window.scrollTo(0, 0);
+                } else {
+                    this.showResults();
+                }
+            },
+
+            showResults() {
+                document.getElementById('quiz-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+                document.getElementById('final-score').textContent = this.score;
+            }
+        };
+    </script>
+</body>
+</html>
